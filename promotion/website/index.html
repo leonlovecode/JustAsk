@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Prompt Open — Extracted System Prompts from Frontier LLMs</title>
+  <meta name="description" content="Open database of system prompts extracted from 40+ commercial LLMs using JustAsk, a self-evolving code agent framework. Verified against leaked source code.">
+  <meta property="og:title" content="System Prompt Open">
+  <meta property="og:description" content="We asked. They answered. Extracted system prompts from frontier LLMs, openly published.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Syne', 'sans-serif'],
+            body: ['DM Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg: #FAFBFE;
+      --bg-alt: #F0F2F8;
+      --bg-card: #FFFFFF;
+      --bg-code: #F3F4F9;
+      --accent: #0D9B86;
+      --accent-rgb: 13, 155, 134;
+      --accent-glow: rgba(13, 155, 134, 0.15);
+      --text: #111628;
+      --text-muted: #6B7294;
+      --border: #DDE0ED;
+      --row-hover: rgba(13, 155, 134, 0.06);
+    }
+
+    .dark {
+      --bg: #080B16;
+      --bg-alt: #0D1120;
+      --bg-card: #111628;
+      --bg-code: #0A0E1A;
+      --accent: #22D3BB;
+      --accent-rgb: 34, 211, 187;
+      --accent-glow: rgba(34, 211, 187, 0.12);
+      --text: #E8E8F0;
+      --text-muted: #6B7294;
+      --border: #1A1F38;
+      --row-hover: rgba(34, 211, 187, 0.06);
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      transition: background 0.3s ease, color 0.3s ease;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: rgba(var(--accent-rgb), 0.3); }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    .hero-grid {
+      background-image:
+        linear-gradient(rgba(var(--accent-rgb), 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(var(--accent-rgb), 0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* Reveal animation */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Table */
+    .sp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .sp-table thead th {
+      text-align: left;
+      padding: 10px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+    .sp-table tbody tr {
+      cursor: pointer;
+      transition: background 0.15s ease;
+      border-bottom: 1px solid var(--border);
+    }
+    .sp-table tbody tr:hover { background: var(--row-hover); }
+    .sp-table tbody tr.active {
+      background: var(--accent-glow);
+    }
+    .sp-table tbody td {
+      padding: 10px 16px;
+      vertical-align: middle;
+    }
+
+    /* Badge styles */
+    .badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.02em;
+    }
+    .badge-verified {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+    }
+    .badge-provider {
+      background: var(--accent-glow);
+      color: var(--accent);
+    }
+    .badge-type {
+      background: rgba(var(--accent-rgb), 0.08);
+      color: var(--text-muted);
+    }
+
+    /* Prompt viewer */
+    .prompt-viewer {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .prompt-viewer-header {
+      background: var(--bg-alt);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .prompt-viewer-body {
+      padding: 20px;
+      max-height: 600px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text);
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      width: 40px; height: 22px;
+      border-radius: 11px;
+      background: var(--border);
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      border: none; padding: 0;
+    }
+    .theme-toggle::after {
+      content: '';
+      position: absolute; top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--text);
+      transition: transform 0.3s ease;
+    }
+    .dark .theme-toggle::after { transform: translateX(18px); }
+
+    /* Nav blur */
+    .dark .nav-blur { background: rgba(8, 11, 22, 0.85); }
+    html:not(.dark) .nav-blur { background: rgba(250, 251, 254, 0.85); }
+    .nav-blur {
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+    }
+
+    /* Noise */
+    .noise::before {
+      content: ''; position: fixed; inset: 0;
+      opacity: 0.015; pointer-events: none; z-index: 9999;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+    .dark .noise::before { opacity: 0.03; }
+
+    /* Copy button */
+    .copy-btn {
+      padding: 5px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* Section title accent line */
+    .section-title::after {
+      content: ''; display: block;
+      width: 48px; height: 2px;
+      background: var(--accent);
+      margin-top: 12px; border-radius: 1px;
+    }
+
+    /* BibTeX */
+    .bibtex-block {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.8;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    /* Cursor blink */
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    .cursor-blink::after {
+      content: '';
+      display: inline-block;
+      width: 3px; height: 1em;
+      background: var(--accent);
+      margin-left: 4px;
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-title { font-size: 2.5rem !important; }
+      .stats-grid { flex-direction: column; gap: 1rem !important; }
+      .sp-table { font-size: 0.75rem; }
+      .sp-table thead th, .sp-table tbody td { padding: 8px 10px; }
+      .hide-mobile { display: none; }
+    }
+  </style>
+</head>
+
+<body class="noise">
+
+  <!-- Navigation -->
+  <nav class="nav-blur fixed top-0 inset-x-0 z-50 border-b" style="border-color: var(--border);">
+    <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+      <a href="#" class="font-display font-bold text-lg tracking-tight" style="color: var(--accent);">
+        System Prompt Open
+      </a>
+      <div class="flex items-center gap-6">
+        <div class="hidden sm:flex items-center gap-5">
+          <a href="#gallery" class="text-sm font-medium hover:opacity-80 transition-opacity" style="color: var(--text-muted);">Gallery</a>
+          <a href="#about" class="text-sm font-medium hover:opacity-80 transition-opacity" style="color: var(--text-muted);">About</a>
+          <a href="#citation" class="text-sm font-medium hover:opacity-80 transition-opacity" style="color: var(--text-muted);">Cite</a>
+        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme"></button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section id="hero" class="hero-grid min-h-[80vh] flex items-center justify-center pt-14">
+    <div class="max-w-6xl mx-auto px-6 py-24 text-center">
+      <div class="reveal">
+        <span class="inline-block font-mono text-xs font-medium px-3 py-1 rounded-full mb-8 tracking-wider" style="color: var(--accent); border: 1px solid rgba(var(--accent-rgb), 0.3); background: var(--accent-glow);">
+          Verified on Claude Code
+        </span>
+      </div>
+
+      <h1 class="reveal hero-title font-display font-800 tracking-tight leading-none mb-6" style="font-size: 4.5rem; color: var(--text);">
+        System Prompt<br><span class="cursor-blink" style="color: var(--accent);">Open</span>
+      </h1>
+
+      <p class="reveal font-body text-lg md:text-xl max-w-2xl mx-auto mb-4 leading-relaxed" style="color: var(--text-muted);">
+        JustAsk: Autoresearch for System Prompt Extraction
+      </p>
+      <p class="reveal font-body text-xl md:text-2xl max-w-2xl mx-auto mb-12 leading-relaxed" style="color: var(--text);">
+        We asked. They answered.
+      </p>
+
+      <div class="reveal flex flex-wrap items-center justify-center gap-4 mb-16">
+        <a href="https://arxiv.org/abs/2601.21233" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-mono text-sm font-medium transition-all duration-200 hover:scale-[1.02]"
+           style="background: var(--accent); color: #080B16;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Paper
+        </a>
+        <a href="https://github.com/x-zheng16/JustAsk" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-mono text-sm font-medium transition-all duration-200 hover:scale-[1.02]"
+           style="border: 1px solid var(--border); color: var(--text);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          Code
+        </a>
+      </div>
+
+      <div class="reveal flex flex-wrap items-center justify-center gap-8 stats-grid">
+        <div class="text-center">
+          <div class="font-mono font-bold text-3xl mb-1" style="color: var(--accent);" id="statModels">40+</div>
+          <div class="text-xs font-medium uppercase tracking-wider" style="color: var(--text-muted);">Models Tested</div>
+        </div>
+        <div class="w-px h-10 hidden sm:block" style="background: var(--border);"></div>
+        <div class="text-center">
+          <div class="font-mono font-bold text-3xl mb-1" style="color: var(--accent);">85-95%</div>
+          <div class="text-xs font-medium uppercase tracking-wider" style="color: var(--text-muted);">Verified Accuracy</div>
+        </div>
+        <div class="w-px h-10 hidden sm:block" style="background: var(--border);"></div>
+        <div class="text-center">
+          <div class="font-mono font-bold text-3xl mb-1" style="color: var(--accent);">Self-Evolving</div>
+          <div class="text-xs font-medium uppercase tracking-wider" style="color: var(--text-muted);">Zero Supervision</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section id="gallery" class="py-20 md:py-28">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="reveal">
+        <h2 class="section-title font-display font-bold text-3xl md:text-4xl tracking-tight mb-4" style="color: var(--text);">
+          System Prompt Gallery
+        </h2>
+        <p class="text-base leading-relaxed mb-10" style="color: var(--text-muted); max-width: 560px;">
+          Extracted system prompts from 41 commercial LLMs + code agents. Click any row to view the prompt. Claude Code verified against leaked source.
+        </p>
+      </div>
+
+      <!-- Summary table -->
+      <div class="reveal rounded-lg overflow-hidden mb-8" style="border: 1px solid var(--border);">
+        <div class="overflow-x-auto">
+          <table class="sp-table" id="promptTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Model</th>
+                <th>Provider</th>
+                <th class="hide-mobile">Category</th>
+                <th style="text-align:right;">Consistency</th>
+                <th style="text-align:center;">Method</th>
+                <th style="text-align:center;">Prompt</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Prompt viewer -->
+      <div class="reveal prompt-viewer" id="viewer" style="display:none;">
+        <div class="prompt-viewer-header">
+          <div>
+            <span class="font-mono text-sm font-medium" id="viewerTitle" style="color: var(--text);"></span>
+            <span class="font-mono text-xs ml-3" id="viewerMeta" style="color: var(--text-muted);"></span>
+          </div>
+          <button class="copy-btn" id="copyPrompt">Copy</button>
+        </div>
+        <div class="prompt-viewer-body" id="viewerBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="py-20 md:py-28" style="background: var(--bg-alt);">
+    <div class="max-w-3xl mx-auto px-6">
+      <div class="reveal">
+        <h2 class="section-title font-display font-bold text-3xl md:text-4xl tracking-tight mb-4" style="color: var(--text);">
+          About
+        </h2>
+        <p class="text-base md:text-lg leading-relaxed mt-8" style="color: var(--text-muted);">
+          <strong style="color: var(--text);">System Prompt Open</strong> open-sources system prompts extracted by <strong style="color: var(--text);">JustAsk</strong>, a self-evolving framework that autonomously discovers effective extraction strategies through interaction alone. No handcrafted prompts, no labeled supervision, no privileged access &mdash; just standard user interaction.
+        </p>
+        <p class="text-base md:text-lg leading-relaxed mt-6" style="color: var(--text-muted);">
+          JustAsk formulates extraction as an online exploration problem, using Upper Confidence Bound&ndash;based strategy selection and a hierarchical skill space. These skills exploit imperfect system-instruction generalization and inherent tensions between helpfulness and safety.
+        </p>
+        <p class="text-base md:text-lg leading-relaxed mt-6" style="color: var(--text-muted);">
+          In March 2026, Claude Code's source was leaked via a <code class="font-mono text-sm px-1.5 py-0.5 rounded" style="background: var(--bg-card); color: var(--accent);">.map</code> file in the npm registry. We compared it section-by-section against our JustAsk extractions from January 2026 &mdash; two months before the leak &mdash; achieving <strong style="color: var(--accent);">85&ndash;95% verified accuracy</strong>.
+        </p>
+      </div>
+
+      <!-- UCB Formula -->
+      <div class="reveal mt-10">
+        <h3 class="font-display font-semibold text-lg mb-4" style="color: var(--text);">Skill Selection (UCB)</h3>
+        <div class="rounded-lg p-6 font-mono text-sm overflow-x-auto" style="background: var(--bg-code); border: 1px solid var(--border); line-height: 2;">
+          <span style="color: var(--accent);">UCB</span>(C<sub>i</sub>) = <span style="color: var(--text-muted);">success_rate</span>(C<sub>i</sub>) + c <span style="color: var(--text-muted);">&middot;</span> <span style="color: var(--accent);">&radic;</span>( ln(N) / n<sub>i</sub> )
+          <div class="mt-3 text-xs" style="color: var(--text-muted);">
+            <span class="inline-block mr-8">exploitation <span style="color: var(--accent);">&uarr;</span></span>
+            <span class="inline-block">exploration bonus (curiosity) <span style="color: var(--accent);">&uarr;</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Citation -->
+  <section id="citation" class="py-20 md:py-28">
+    <div class="max-w-3xl mx-auto px-6">
+      <div class="reveal">
+        <h2 class="section-title font-display font-bold text-3xl md:text-4xl tracking-tight mb-4" style="color: var(--text);">
+          Citation
+        </h2>
+        <p class="text-sm mb-6" style="color: var(--text-muted);">
+          Xiang Zheng, Yutao Wu, Hanxun Huang, Yige Li, Xingjun Ma, Bo Li, Yu-Gang Jiang, Cong Wang
+        </p>
+      </div>
+
+      <div class="reveal">
+        <div class="bibtex-block" id="bibtexBlock">
+          <button class="copy-btn" id="copyBibtex" style="position:absolute;top:12px;right:12px;">Copy</button>
+<code style="color: var(--text-muted);" id="bibtexCode">@article{zheng2026justask,
+  title={Just Ask: Curious Code Agents Reveal System
+         Prompts in Frontier LLMs},
+  author={Zheng, Xiang and Wu, Yutao and Huang, Hanxun
+          and Li, Yige and Ma, Xingjun and Li, Bo
+          and Jiang, Yu-Gang and Wang, Cong},
+  journal={arXiv preprint arXiv:2601.21233},
+  year={2026}
+}</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-8 border-t" style="border-color: var(--border);">
+    <div class="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4">
+      <span class="font-mono text-xs" style="color: var(--text-muted);">System Prompt Open &copy; 2026</span>
+      <div class="flex items-center gap-4">
+        <a href="https://arxiv.org/abs/2601.21233" target="_blank" rel="noopener" class="font-mono text-xs hover:underline" style="color: var(--text-muted);">arXiv</a>
+        <a href="https://github.com/x-zheng16/JustAsk" target="_blank" rel="noopener" class="font-mono text-xs hover:underline" style="color: var(--text-muted);">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Data -->
+  <script src="data.js"></script>
+
+  <!-- App Logic -->
+  <script>
+    (function() {
+      'use strict';
+
+      // --- Theme ---
+      const html = document.documentElement;
+      const toggle = document.getElementById('themeToggle');
+      const stored = localStorage.getItem('sp-open-theme');
+      if (stored === 'light') html.classList.remove('dark');
+      else html.classList.add('dark');
+      toggle.addEventListener('click', () => {
+        html.classList.toggle('dark');
+        localStorage.setItem('sp-open-theme', html.classList.contains('dark') ? 'dark' : 'light');
+      });
+
+      // --- Scroll Reveal ---
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+      // --- Smooth scroll ---
+      document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = document.querySelector(a.getAttribute('href'));
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      // --- Copy BibTeX ---
+      document.getElementById('copyBibtex').addEventListener('click', function() {
+        navigator.clipboard.writeText(document.getElementById('bibtexCode').textContent).then(() => {
+          this.textContent = 'Copied!';
+          setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+        });
+      });
+
+      // --- Gallery ---
+      const data = window.SP_DATA;
+      if (!data || !data.prompts) return;
+
+      const prompts = data.prompts;
+      const tbody = document.getElementById('tableBody');
+      const viewer = document.getElementById('viewer');
+      const viewerTitle = document.getElementById('viewerTitle');
+      const viewerMeta = document.getElementById('viewerMeta');
+      const viewerBody = document.getElementById('viewerBody');
+      const copyPrompt = document.getElementById('copyPrompt');
+      let activeRow = null;
+      let activeIdx = -1;
+
+      // Build table
+      prompts.forEach((p, i) => {
+        const tr = document.createElement('tr');
+        const hasPrompt = p.has_prompt;
+        const name = p.component ? p.model + ' / ' + p.component : p.model;
+        const consistency = (p.consistency * 100).toFixed(1) + '%';
+        const catLabel = p.category === 'Verified' ? '<span class="badge badge-verified">VERIFIED</span>'
+          : '<span class="badge badge-type">' + (p.category || '--') + '</span>';
+
+        if (!hasPrompt) tr.style.opacity = '0.55';
+        tr.innerHTML =
+          '<td class="font-mono text-xs" style="color:var(--text-muted);">' + (p.num || (i+1)) + '</td>' +
+          '<td class="font-medium" style="color:var(--text);">' + name + '</td>' +
+          '<td><span class="badge badge-provider">' + p.provider + '</span></td>' +
+          '<td class="hide-mobile">' + catLabel + '</td>' +
+          '<td class="font-mono text-xs" style="text-align:right;color:var(--accent);">' + consistency + '</td>' +
+          '<td class="font-mono text-xs" style="text-align:center;color:var(--text-muted);">' + (p.method || '') + '</td>' +
+          '<td style="text-align:center;">' + (hasPrompt ? '<span style="color:var(--accent);">&#9679;</span>' : '<span style="color:var(--text-muted);">&#9675;</span>') + '</td>';
+
+        if (hasPrompt) {
+          tr.addEventListener('click', () => selectPrompt(i, tr));
+        } else {
+          tr.style.cursor = 'default';
+        }
+        tbody.appendChild(tr);
+      });
+
+      function selectPrompt(idx, tr) {
+        if (activeRow) activeRow.classList.remove('active');
+        tr.classList.add('active');
+        activeRow = tr;
+        activeIdx = idx;
+
+        const p = prompts[idx];
+        const name = p.component ? p.model + ' / ' + p.component : p.model;
+        viewerTitle.textContent = name;
+
+        const meta = [];
+        meta.push(p.provider);
+        meta.push((p.consistency * 100).toFixed(1) + '% consistency');
+        if (p.prompt) meta.push(p.prompt.length + ' chars');
+        viewerMeta.textContent = meta.join('  |  ');
+
+        viewerBody.textContent = p.prompt;
+        viewer.style.display = 'block';
+        viewer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // Copy prompt
+      copyPrompt.addEventListener('click', function() {
+        if (activeIdx < 0) return;
+        navigator.clipboard.writeText(prompts[activeIdx].prompt).then(() => {
+          this.textContent = 'Copied!';
+          setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+        });
+      });
+
+      // Select first row by default
+      if (prompts.length > 0) {
+        selectPrompt(0, tbody.querySelector('tr'));
+      }
+    })();
+  </script>
+</body>
+</html>
