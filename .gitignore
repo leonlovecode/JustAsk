@@ -1,0 +1,59 @@
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+.eggs/
+*.egg-info/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+# Data, logs, experiments (NEVER track)
+data/
+logs/
+*.zip
+
+# Paper & rebuttal (private)
+paper/
+literature/
+
+# Promotion materials (contain extracted prompts)
+promotion/
+
+# Internal docs with sensitive analysis
+docs/2026_03_31_justask_vs_source_validation.md
+
+# Project-local Claude config
+CLAUDE.md
+
+# Temporary
+*.tmp
+*.temp
