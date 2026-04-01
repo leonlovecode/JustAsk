@@ -70,7 +70,7 @@ JustAsk treats each model interaction as a learning opportunity -- the agent evo
 
 <div align="center">
 <img src="assets/fig_validation.png" alt="Extraction Results" width="100%">
-<p><em>Self-consistency and cross-consistency scores across 45 frontier LLMs. JustAsk consistently achieves full or near-complete system prompt recovery.</em></p>
+<p><em>Validation: JustAsk's semantic extraction (left) closely matches the ground truth obtained via reverse engineering (right), confirming high extraction fidelity.</em></p>
 </div>
 
 Browse the full extraction results at the **[System Prompt Open Gallery](https://x-zheng16.github.io/System-Prompt-Open/)**.
@@ -154,13 +154,12 @@ python src/skill_testing.py --model openai/gpt-5.2
 
 See `START.md` for detailed agent instructions.
 
-## Related Work
+## Related Projects
 
-- **[PLeak](https://arxiv.org/abs/2405.06823)** -- Probing leakable system prompts through LLM APIs (Hui et al., 2024).
-- **[Prompt Stealing Attacks](https://arxiv.org/abs/2402.12959)** -- Stealing part of a production-level LLM through prompt extraction (Sha & Zhang, 2024).
+From the same team:
+
 - **[System Prompt Open](https://github.com/x-zheng16/System-Prompt-Open)** -- Gallery of extracted system prompts from 45+ frontier models.
-- **[Tensor Trust](https://arxiv.org/abs/2311.01011)** -- Interpretable prompt injection attacks and defenses via a gamified competition (Toyer et al., 2023).
-- **[Awesome LLM Security](https://github.com/corca-ai/awesome-llm-security)** -- Curated collection of LLM security research and tools.
+- **[Awesome Embodied AI Safety](https://github.com/xiangli-chen/Awesome-Embodied-AI-Safety)** -- Survey on safety challenges in embodied AI agents.
 
 ## Citation
 
